@@ -4,7 +4,6 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 
 //@desc Register a user
-//@route POST /api/users/register
 //@access public
 const userRegister = (async (req, res) => {
   const { username, password , email} = req.body;
@@ -38,8 +37,7 @@ const userRegister = (async (req, res) => {
   }
 });
 
-//@desc Register a user
-//@route POST /api/users/register
+//@desc user login
 //@access public
 const userLogin = (async (req,res) => {
   const { username, password } = req.body;
@@ -74,4 +72,25 @@ const currentUser = (async (req, res) => {
   res.json(req.user);
 });
 
-module.exports = { userRegister, userLogin, currentUser };
+//@desc approve user member
+//@access private
+const approveUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const approvedUser = await User.findByIdAndUpdate(req.params.id, {
+      approvalStatus: true
+    }, { new: true }); // Add { new: true } to get the updated user object
+    if (!approvedUser) {
+      return res.status(404).json({ error: 'User approval failed.' });
+    }
+    res.status(200).json(approvedUser);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+module.exports = { userRegister, userLogin, currentUser, approveUser };
