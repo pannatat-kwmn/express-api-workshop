@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 //@desc Register a user
 //@access public
 const userRegister = (async (req, res) => {
-  const { username, password , email} = req.body;
+  const { username, password, email } = req.body;
   if (!username || !password || !email) {
     res.status(400);
     throw new Error("All fields are required");
@@ -26,7 +26,7 @@ const userRegister = (async (req, res) => {
     userPassword: hashedPassword,
     userSalt,
     approvalStatus: false,
-    userRole: 'Member'
+    userRole: 'member'
   });
   console.log(`User created ${user}`);
   if (user) {
@@ -39,20 +39,24 @@ const userRegister = (async (req, res) => {
 
 //@desc user login
 //@access public
-const userLogin = (async (req,res) => {
+const userLogin = (async (req, res) => {
   const { username, password } = req.body;
-  if(!username || !password){
+  if (!username || !password) {
     res.status(400);
     throw new Error('Please fill Username and Password');
   }
   const user = await User.findOne({ userName: username });
-  if(user && (await bcrypt.compare(password, user.userPassword))){
+  if (user && (await bcrypt.compare(password, user.userPassword))) {
+    if (!user.approvalStatus) {
+      res.status(401).json({ error: 'User account has not been approved' })
+    }
     const accessToken = jwt.sign(
       {
         users: {
+          id: user.id,
           username: user.userName,
           userEmail: user.userEmail,
-          id: user.id,
+          userRole: user.userRole
         },
       },
       process.env.ACCESS_TOKEN_SECERT,
@@ -66,22 +70,27 @@ const userLogin = (async (req,res) => {
 });
 
 //@desc Current user info
-//@route POST /api/users/current
 //@access private
 const currentUser = (async (req, res) => {
-  res.json(req.user);
+  try {
+    const user = await currentUser(req, res);
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred." });
+  }
 });
 
 //@desc approve user member
 //@access private
-const approveUser = async (req, res) => {
+const approveUser = (async (req, res) => {
+  const { approvalStatus } = req.body;
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
     const approvedUser = await User.findByIdAndUpdate(req.params.id, {
-      approvalStatus: true
+      approvalStatus: approvalStatus
     }, { new: true }); // Add { new: true } to get the updated user object
     if (!approvedUser) {
       return res.status(404).json({ error: 'User approval failed.' });
@@ -90,7 +99,7 @@ const approveUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-};
+});
 
 
 module.exports = { userRegister, userLogin, currentUser, approveUser };
