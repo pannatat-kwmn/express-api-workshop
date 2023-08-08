@@ -3,25 +3,8 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-var mongoose = require('mongoose');
+const database = require('./mongoDB');
 
-require('dotenv').config();
-const mongoString = process.env.DATABASE_URL
-const dbName = 'express-workshop';
-
-mongoose.connect(`${mongoString}/${dbName}`, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-const database = mongoose.connection;
-
-database.on('error', (error) => {
-  console.log(error)
-});
-
-database.once('connected', () => {
-  console.log('Database Connected');
-});
 
 var app = express();
 
@@ -40,7 +23,7 @@ var cors = require('cors');
 app.use(cors());
 
 app.use('/', require('./routes/index'));
-app.use("/api/v1/users", require('./routes/users'));
+app.use("/api/v1/", require('./routes/users'));
 app.use("/api/v1/products", require('./routes/product'));
 app.use("/api/v1/orders", require('./routes/order'));
 
