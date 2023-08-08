@@ -42,17 +42,20 @@ const userRegister = (async (req, res) => {
 const userLogin = (async (req,res) => {
   const { username, password } = req.body;
   if(!username || !password){
-    res.status(400);
-    throw new Error('Please fill Username and Password');
+    res.status(400).json({ error: 'Please fill Username and Password' });
   }
   const user = await User.findOne({ userName: username });
   if(user && (await bcrypt.compare(password, user.userPassword))){
+    if(!user.approvalStatus){
+      res.status(401).json({ error: 'Your account has not been approved yet.'})
+    }
     const accessToken = jwt.sign(
       {
         users: {
+          id: user.id,
           username: user.userName,
           userEmail: user.userEmail,
-          id: user.id,
+          userRole: user.userRole
         },
       },
       process.env.ACCESS_TOKEN_SECERT,
@@ -60,8 +63,7 @@ const userLogin = (async (req,res) => {
     );
     res.status(200).json({ accessToken });
   } else {
-    res.status(401);
-    throw new Error("Username or password is not valid");
+    res.status(401).json({ error: "Username or password is not valid"})
   }
 });
 
@@ -75,14 +77,15 @@ const currentUser = (async (req, res) => {
 //@desc approve user member
 //@access private
 const approveUser = async (req, res) => {
+  const { requestStatus } = req.body;
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
     const approvedUser = await User.findByIdAndUpdate(req.params.id, {
-      approvalStatus: true
-    }, { new: true }); // Add { new: true } to get the updated user object
+      approvalStatus: requestStatus
+    }, { new: true });
     if (!approvedUser) {
       return res.status(404).json({ error: 'User approval failed.' });
     }
