@@ -10,7 +10,7 @@ const {
 } = require("../controllers/productController");
 const validateToken = require("../middleware/tokenValidation");
 
-router.use(validateToken);
+//router.use(validateToken);
 router.route("/").get(getProducts).post(createProduct);
 router.route('/:id/order').get(getProductOrder);
 router.route("/:id").get(getProduct).put(updateProduct).delete(deleteProduct);

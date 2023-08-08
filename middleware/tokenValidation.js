@@ -38,4 +38,4 @@ const userRoleCheck = (requiredRoles) => (req, res, next) => {
 };
 
 
-module.exports = validateToken, userRoleCheck;
+module.exports = { validateToken, userRoleCheck };

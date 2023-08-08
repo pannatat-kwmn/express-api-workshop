@@ -4,16 +4,16 @@ var router = express.Router();
 const {
   userRegister,
   userLogin,
-  currentUser
+  currentUser,
+  approveUser
 } = require("../controllers/usersController");
 const { 
   validateToken,
-  checkUserRoles
+  userRoleCheck
 } = require('../middleware/tokenValidation');
 
 router.post("/register", userRegister);
 router.post('/login', userLogin);
-router.get('/current', validateToken, currentUser );
-router.put('/approve', validateToken, checkUserRoles(['admin']));
+router.put('/approve', [validateToken, userRoleCheck ], approveUser);
 
 module.exports = router;
